@@ -1,6 +1,5 @@
 from bs4 import BeautifulSoup
-from urllib import urlopen, urlencode
-from time import sleep
+from urllib import urlopen
 from urlparse import parse_qs
 import os
 import re
@@ -59,9 +58,9 @@ def start_download(file_name, download_size, download_file):
         file_size = os.path.getsize(file_name)
         if file_size < download_size:
             resume_download(file_size,file_name,download_size,download_url)
-        print('Download complete!')
     else:
         write_file(file_name,download_file)
+    print('Download complete!')
 
 def download_video(url,youtube_domain):
     file_info, title = get_file_info(url,youtube_domain)
