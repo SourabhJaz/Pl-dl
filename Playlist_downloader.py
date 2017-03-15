@@ -52,8 +52,8 @@ def get_video_name(title):
     file_name = re.sub(r'[\\&,\'|]','',video_name)
     return file_name
 
-def start_download(file_name, download_size, download_file):
-    print("Downloading:{0} \nSize: {1}bytes".format(file_name,download_size))    
+def start_download(file_name, download_size, download_file, download_url):
+    print("Downloading:{0} \nSize: {1} bytes".format(file_name,download_size))    
     if os.path.isfile(file_name):
         file_size = os.path.getsize(file_name)
         if file_size < download_size:
@@ -68,7 +68,7 @@ def download_video(url,youtube_domain):
     download_file = urlopen(download_url)
     download_size = get_video_size(download_file)
     file_name = get_video_name(title)
-    start_download(file_name, download_size, download_file)
+    start_download(file_name, download_size, download_file, download_url)
 
 
 playlist_url = "https://www.youtube.com/watch?v=6LedYr5tQUs&list=PLTB0eCoUXErZe2pMrH3qO4tHtw-K0QKb_"
