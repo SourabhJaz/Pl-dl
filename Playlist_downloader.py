@@ -76,7 +76,10 @@ youtube_domain = "https://www.youtube.com"
 response = urlopen(playlist_url)
 parsed_page = BeautifulSoup(response,'html.parser')
 playlist = get_playlist(parsed_page)
-video_urls = get_video_urls(playlist,youtube_domain)
+if playlist != None:
+    video_urls = get_video_urls(playlist,youtube_domain)
+else:
+    video_urls = [playlist_url]
 
 for url in video_urls:
     download_video(url,youtube_domain)
