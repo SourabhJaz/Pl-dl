@@ -63,15 +63,18 @@ def start_download(file_name, download_size, download_file, download_url):
     print('Download complete!')
 
 def download_video(url,youtube_domain):
-    file_info, title = get_file_info(url,youtube_domain)
-    download_url = get_download_link(file_info)
-    download_file = urlopen(download_url)
-    download_size = get_video_size(download_file)
-    file_name = get_video_name(title)
-    start_download(file_name, download_size, download_file, download_url)
+    try:
+        file_info, title = get_file_info(url,youtube_domain)
+        download_url = get_download_link(file_info)
+        print(file_info['token'][0])
+        download_file = urlopen(download_url)
+        download_size = get_video_size(download_file)
+        file_name = get_video_name(title)
+        start_download(file_name, download_size, download_file, download_url)
+    except Exception as e:
+        print('Download failed! ',e)
 
-
-playlist_url = "https://www.youtube.com/watch?v=6LedYr5tQUs&list=PLTB0eCoUXErZe2pMrH3qO4tHtw-K0QKb_"
+playlist_url = "https://www.youtube.com/watch?v=z-diRlyLGzo"
 youtube_domain = "https://www.youtube.com"
 response = urlopen(playlist_url)
 parsed_page = BeautifulSoup(response,'html.parser')
