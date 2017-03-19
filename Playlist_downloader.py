@@ -49,7 +49,7 @@ def get_file_info(url,youtube_domain):
 
 def get_video_name(title):
     video_name = title+'.mp4'
-    file_name = re.sub(r'[\\&,\'|]','',video_name)
+    file_name = re.sub(r'[\\&,\'|"]','',video_name)
     return file_name
 
 def start_download(file_name, download_size, download_file, download_url):
@@ -66,7 +66,6 @@ def download_video(url,youtube_domain):
     try:
         file_info, title = get_file_info(url,youtube_domain)
         download_url = get_download_link(file_info)
-        print(file_info['token'][0])
         download_file = urlopen(download_url)
         download_size = get_video_size(download_file)
         file_name = get_video_name(title)
@@ -74,7 +73,7 @@ def download_video(url,youtube_domain):
     except Exception as e:
         print('Download failed! ',e)
 
-playlist_url = "https://www.youtube.com/watch?v=z-diRlyLGzo"
+playlist_url = "https://www.youtube.com/watch?v=yL36kgWHkAM"
 youtube_domain = "https://www.youtube.com"
 response = urlopen(playlist_url)
 parsed_page = BeautifulSoup(response,'html.parser')
@@ -87,3 +86,14 @@ else:
 for url in video_urls:
     download_video(url,youtube_domain)
 
+# https://www.youtube.com/watch?v=nhQb1QRsSgs
+# https://www.youtube.com/watch?v=BAhRc5u_yO4
+# https://www.youtube.com/watch?v=z-diRlyLGzo
+# https://www.youtube.com/watch?v=AR-QHXaAaJU
+# https://www.youtube.com/watch?v=yL36kgWHkAM
+
+"""
+#   audio download   
+    audio_url_map = parse_qs(file_info['adaptive_fmts'][0])
+    url_map_split = audio_url_map['url']
+""" 
