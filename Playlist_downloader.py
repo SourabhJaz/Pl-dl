@@ -44,6 +44,8 @@ def get_file_info(url,youtube_domain):
     response_file = urlopen(file_info_url)
     file_info_coded = response_file.read()
     file_info = parse_qs(file_info_coded)
+    if 'title' not in file_info:
+        raise Exception('Video is copyrighted or restricted')
     title = file_info['title'][0]
     return file_info, title
 
@@ -71,9 +73,9 @@ def download_video(url,youtube_domain):
         file_name = get_video_name(title)
         start_download(file_name, download_size, download_file, download_url)
     except Exception as e:
-        print('Download failed! ',e)
+        print('Download failed! ',e.args)
 
-playlist_url = "https://www.youtube.com/watch?v=yL36kgWHkAM"
+playlist_url = "https://www.youtube.com/watch?v=nhQb1QRsSgs"
 youtube_domain = "https://www.youtube.com"
 response = urlopen(playlist_url)
 parsed_page = BeautifulSoup(response,'html.parser')
@@ -94,6 +96,8 @@ for url in video_urls:
 
 """
 #   audio download   
-    audio_url_map = parse_qs(file_info['adaptive_fmts'][0])
-    url_map_split = audio_url_map['url']
+    adaptive_url_map = parse_qs(file_info['adaptive_fmts'][0])
+    url_map_split = adaptive_url_map['url']
+    no_fmts = len(url_map_split)
+    audio_url = url_map_split[no_fmts-1]
 """ 
