@@ -35,11 +35,9 @@ def get_download_link(file_info):
     return download_url
 
 def get_audio_download_link(file_info):
-    url_map = parse_qs(file_info['url_encoded_fmt_stream_map'][0])
     adaptive_url_map = parse_qs(file_info['adaptive_fmts'][0])
     url_map_split = adaptive_url_map['url']
-    no_fmts = len(url_map_split)
-    audio_url = url_map_split[no_fmts-1]
+    audio_url = url_map_split[-1]
     return audio_url
 
 def get_stream_url(file_info, stream_type):
