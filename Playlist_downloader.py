@@ -21,8 +21,12 @@ def get_video_urls(playlist,youtube_domain):
     return video_urls
 
 def write_file(file_name,stream):
-    with open(file_name, 'ab') as f:
-        f.write(stream.read())
+    with open(file_name, 'ab', 0) as f:
+        while True:
+            one_kb = stream.read(1024)
+            if not one_kb:
+                break;
+            f.write(one_kb)
 
 def get_download_link(file_info):
     url_map = parse_qs(file_info['url_encoded_fmt_stream_map'][0])
@@ -72,7 +76,7 @@ def get_video_name(title, stream_type):
         content_name = title+'.mp4'
     else:
         content_name = title+'.mp3'        
-    file_name = re.sub(r'[\\&,\'|"]','',content_name)
+    file_name = re.sub(r'[\\&,\'|"?:]','',content_name)
     return file_name
 
 def start_download(file_name, download_size, download_file, download_url):
