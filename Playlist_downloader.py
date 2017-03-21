@@ -49,7 +49,7 @@ def get_stream_url(file_info, stream_type):
 
 def get_video_size(download):
     download_info = download.info()
-    download_size = download_info.getheaders("Content-Length")[0]
+    download_size = int(download_info.getheaders("Content-Length")[0])
     return download_size
 
 def resume_download(file_size, file_name, download_size, download_url):
@@ -86,15 +86,25 @@ def start_download(file_name, download_size, download_file, download_url):
         write_file(file_name,download_file)
     print('Download complete!')
 
-def download_video(url,youtube_domain,stream_type):
-    try:
-        file_info, title = get_file_info(url,youtube_domain)
+def attempt_download(file_info,title,stream_type):
+    retry = 0
+    while retry < 2:
         download_url = get_stream_url(file_info, stream_type)                       
         download_file = urlopen(download_url)
         download_size = get_video_size(download_file)
-        file_name = get_video_name(title, stream_type)
-        print("Downloading:{0} \nSize: {1} bytes".format(file_name,download_size))            
-        start_download(file_name, download_size, download_file, download_url)
+        if download_size > 0:
+            break
+        retry += 1
+    if download_size == 0:
+        raise Exception('Video is copyrighted or restricted')
+    file_name = get_video_name(title, stream_type)
+    print("Downloading:{0} \nSize: {1} bytes".format(file_name,download_size))            
+    start_download(file_name, download_size, download_file, download_url)    
+
+def download_video(url,youtube_domain,stream_type):
+    try:
+        file_info,title = get_file_info(url,youtube_domain)
+        attempt_download(file_info,title,stream_type)
     except Exception as e:
         print('Download failed! ',e.args)
 
@@ -113,8 +123,3 @@ if __name__ == "__main__":
     for url in video_urls:
         download_video(url,youtube_domain,stream_type)
 
-# https://www.youtube.com/watch?v=nhQb1QRsSgs
-# https://www.youtube.com/watch?v=BAhRc5u_yO4
-# https://www.youtube.com/watch?v=z-diRlyLGzo
-# https://www.youtube.com/watch?v=AR-QHXaAaJU
-# https://www.youtube.com/watch?v=yL36kgWHkAM
