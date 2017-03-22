@@ -74,7 +74,7 @@ def get_video_name(title, stream_type):
         content_name = title+'.mp4'
     else:
         content_name = title+'.mp3'        
-    file_name = re.sub(r'[\\&,\'|"?:]','',content_name)
+    file_name = re.sub(r'[^(a-z)(A-Z)(0-9) .]','',content_name)
     return file_name
 
 def start_download(file_name, download_size, download_file, download_url):
