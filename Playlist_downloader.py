@@ -17,6 +17,18 @@ def get_input_arguments():
 		stream_type = 'video'   
 	return playlist_url, start_index, stream_type
 
+def handle_video_download(playlist_url, start_index, stream_type):
+	playlist_section = get_playlist_section(playlist_url)
+	videos_to_download = []
+	if playlist_section != None:
+		playlist_video_urls = get_playlist_video_urls(playlist_section,youtube_domain)
+	else:
+		playlist_video_urls = [playlist_url]
+	videos_to_be_downloaded = get_videos_to_be_dowloaded(playlist_url, playlist_video_urls, start_index)
+	for url in videos_to_be_downloaded:
+		download_video(url,youtube_domain,stream_type)
+
+
 def get_playlist_section(playlist_url):
     response = urlopen(playlist_url)
     parsed_page = BeautifulSoup(response,'html.parser')
@@ -148,13 +160,5 @@ def download_video(url,youtube_domain,stream_type):
 if __name__ == "__main__":
 	youtube_domain = "https://www.youtube.com"
 	playlist_url, start_index, stream_type = get_input_arguments()
-	playlist_section = get_playlist_section(playlist_url)
-	videos_to_download = []
-	if playlist_section != None:
-		playlist_video_urls = get_playlist_video_urls(playlist_section,youtube_domain)
-	else:
-		playlist_video_urls = [playlist_url]
-	videos_to_be_downloaded = get_videos_to_be_dowloaded(playlist_url, playlist_video_urls, start_index)
-	for url in videos_to_be_downloaded:
-		download_video(url,youtube_domain,stream_type)
+	handle_video_download(playlist_url, start_index, stream_type)
 
