@@ -5,13 +5,25 @@ import sys
 import os
 import re
 
-def get_playlist(playlist_url):
+def get_input_arguments():
+	playlist_url = sys.argv[1]
+	if len(sys.argv) > 2:
+		start_index = 'current'
+	else:
+		start_index = 'origin' 
+	if len(sys.argv) > 3:
+		stream_type = sys.argv[2]
+	else:
+		stream_type = 'video'   
+	return playlist_url, start_index, stream_type
+
+def get_playlist_section(playlist_url):
     response = urlopen(playlist_url)
     parsed_page = BeautifulSoup(response,'html.parser')
     playlist = parsed_page.find('div',class_='playlist-videos-container yt-scrollbar-dark yt-scrollbar')
     return playlist
 
-def get_video_urls(playlist,youtube_domain):
+def get_playlist_video_urls(playlist,youtube_domain):
     videos = playlist.find_all('li',class_='yt-uix-scroller-scroll-unit')
     video_urls = []
     for video in videos:
@@ -20,12 +32,37 @@ def get_video_urls(playlist,youtube_domain):
         video_urls.append(unicode(video_url))
     return video_urls
 
+def get_videos_to_be_dowloaded(playlist_url, video_urls, start_index):
+	if start_index == 'origin' or len(video_urls) < 2:
+		videos_to_be_downloaded = video_urls
+	else:
+		current_video_url, _current_video_indexing = playlist_url.split('&',1)
+		videos_to_be_downloaded = get_videos_starting_current_url(current_video_url, video_urls)
+	print(videos_to_be_downloaded)
+	return videos_to_be_downloaded    
+
+
+def get_videos_starting_current_url(current_video_url, video_urls):
+	index_of_current_video = get_index_of_current_video(current_video_url, video_urls)
+	if index_of_current_video != None:
+		videos_from_current_url = video_urls[index_of_current_video :]
+	else:
+		videos_from_current_url = []
+	return videos_from_current_url
+
+def get_index_of_current_video(current_video_url, video_urls):
+	number_of_videos = len(video_urls)
+	for video_index in range(0, number_of_videos):
+		if current_video_url in video_urls[video_index]:
+			return video_index
+	return None
+
 def write_file(file_name,stream):
     with open(file_name, 'ab', 0) as f:
         while True:
             one_kb = stream.read(1024)
             if not one_kb:
-                break;
+                break
             f.write(one_kb)
 
 def get_download_link(file_info):
@@ -109,17 +146,15 @@ def download_video(url,youtube_domain,stream_type):
         print('Download failed! ',e.args)
 
 if __name__ == "__main__":
-    youtube_domain = "https://www.youtube.com"
-    playlist_url = sys.argv[1]
-    if len(sys.argv) > 2:
-        stream_type = sys.argv[2]
-    else:
-        stream_type = 'video'   
-    playlist = get_playlist(playlist_url)
-    if playlist != None:
-        video_urls = get_video_urls(playlist,youtube_domain)
-    else:
-        video_urls = [playlist_url]
-    for url in video_urls:
-        download_video(url,youtube_domain,stream_type)
+	youtube_domain = "https://www.youtube.com"
+	playlist_url, start_index, stream_type = get_input_arguments()
+	playlist_section = get_playlist_section(playlist_url)
+	videos_to_download = []
+	if playlist_section != None:
+		playlist_video_urls = get_playlist_video_urls(playlist_section,youtube_domain)
+	else:
+		playlist_video_urls = [playlist_url]
+	videos_to_be_downloaded = get_videos_to_be_dowloaded(playlist_url, playlist_video_urls, start_index)
+	for url in videos_to_be_downloaded:
+		download_video(url,youtube_domain,stream_type)
 
