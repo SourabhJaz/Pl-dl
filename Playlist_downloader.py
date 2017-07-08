@@ -12,7 +12,7 @@ def get_input_arguments():
 	else:
 		start_index = 'origin' 
 	if len(sys.argv) > 3:
-		stream_type = sys.argv[2]
+		stream_type = sys.argv[3]
 	else:
 		stream_type = 'video'   
 	return playlist_url, start_index, stream_type
@@ -50,7 +50,6 @@ def get_videos_to_be_dowloaded(playlist_url, video_urls, start_index):
 	else:
 		current_video_url, _current_video_indexing = playlist_url.split('&',1)
 		videos_to_be_downloaded = get_videos_starting_current_url(current_video_url, video_urls)
-	print(videos_to_be_downloaded)
 	return videos_to_be_downloaded    
 
 
@@ -137,7 +136,7 @@ def start_download(file_name, download_size, download_file, download_url):
 
 def attempt_download(file_info,title,stream_type):
     retry = 0
-    while retry < 2:
+    while retry < 10:
         download_url = get_stream_url(file_info, stream_type)                       
         download_file = urlopen(download_url)
         download_size = get_video_size(download_file)
