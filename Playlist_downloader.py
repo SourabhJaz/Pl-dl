@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
-from urllib import urlopen
-from urlparse import parse_qs
+from urllib.request import urlopen
+from urllib.parse import parse_qs
 import sys
 import os
 import re
