@@ -4,6 +4,9 @@ from urlparse import parse_qs
 import sys
 import os
 import re
+sys.path.append('/usr/local/lib/python2.7/site-packages')
+from PyQt4 import QtCore, QtGui 
+from Pl_layout import Ui_MainWindow
 
 def get_input_arguments():
 	playlist_url = sys.argv[1]
@@ -156,8 +159,25 @@ def download_video(url,youtube_domain,stream_type):
     except Exception as e:
         print('Download failed! ',e.args)
 
-if __name__ == "__main__":
-	youtube_domain = "https://www.youtube.com"
-	playlist_url, start_index, stream_type = get_input_arguments()
-	handle_video_download(playlist_url, start_index, stream_type)
+def temp_function():
+    youtube_domain = "https://www.youtube.com"
+    playlist_url, start_index, stream_type = get_input_arguments()
+    handle_video_download(playlist_url, start_index, stream_type)
 
+class AppGui(QtGui.QMainWindow, Ui_MainWindow):
+    def __init__(self, parent=None):
+        QtGui.QWidget.__init__(self, parent)
+        self.ui = Ui_MainWindow()
+        self.ui.setupUi(self)    
+        self.ui.pushButton.clicked.connect(self.pass_inputs_to_downloader)
+
+    def pass_inputs_to_downloader(self):
+        video_url = self.ui.lineEdit.text()
+
+        print video_url
+
+if __name__ == "__main__":
+    app = QtGui.QApplication(sys.argv)
+    window = AppGui()
+    window.show()
+    app.exec_()
