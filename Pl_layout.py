@@ -93,8 +93,8 @@ class Ui_MainWindow(object):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(_translate("MainWindow", "Pl-dl Youtube Downloader", None))
-        self.label.setText(_translate("MainWindow", "Video URL", None))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Pl-dl YouTube Downloader", None))
+        self.label.setText(_translate("MainWindow", "YouTube Video URL", None))
         self.pushButton.setText(_translate("MainWindow", "Start Download", None))
         self.groupBox.setTitle(_translate("MainWindow", "Media Type", None))
         self.radioButton.setText(_translate("MainWindow", "Video", None))

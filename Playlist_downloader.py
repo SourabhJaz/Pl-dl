@@ -8,18 +8,6 @@ sys.path.append('/usr/local/lib/python2.7/site-packages')
 from PyQt4 import QtCore, QtGui 
 from Pl_layout import Ui_MainWindow
 
-def get_input_arguments():
-	playlist_url = sys.argv[1]
-	if len(sys.argv) > 2:
-		start_index = 'current'
-	else:
-		start_index = 'origin' 
-	if len(sys.argv) > 3:
-		stream_type = sys.argv[3]
-	else:
-		stream_type = 'video'   
-	return playlist_url, start_index, stream_type
-
 def handle_video_download(playlist_url, start_index, stream_type):
 	playlist_section = get_playlist_section(playlist_url)
 	videos_to_download = []
@@ -159,10 +147,9 @@ def download_video(url,youtube_domain,stream_type):
     except Exception as e:
         print('Download failed! ',e.args)
 
-def temp_function():
+def parse_input_arguments(video_url, media_type, start_index):
     youtube_domain = "https://www.youtube.com"
-    playlist_url, start_index, stream_type = get_input_arguments()
-    handle_video_download(playlist_url, start_index, stream_type)
+    handle_video_download(video_url, start_index, media_type)
 
 class AppGui(QtGui.QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
@@ -173,8 +160,27 @@ class AppGui(QtGui.QMainWindow, Ui_MainWindow):
 
     def pass_inputs_to_downloader(self):
         video_url = self.ui.lineEdit.text()
+        media_type = self.get_media_type()
+        start_index = self.get_start_index()
+        parse_input_arguments(video_url, media_type, start_index)
 
-        print video_url
+    def get_media_type(self):
+        media_type_video_button = self.ui.radioButton
+        media_type_audio_button = self.ui.radioButton_2
+        if media_type_video_button.isChecked():
+            media_type = 'video'
+        else:
+            media_type = 'audio'
+        return media_type
+
+    def get_start_index(self):
+        start_index_playlist_button = self.ui.radioButton_3
+        start_index_current_button = self.ui.radioButton_4
+        if start_index_playlist_button.isChecked():
+            start_index = 'origin'
+        else:
+            start_index = 'current'
+        return start_index
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
