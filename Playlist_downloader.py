@@ -8,19 +8,23 @@ sys.path.append('/usr/local/lib/python2.7/site-packages')
 from PyQt4 import QtCore, QtGui 
 from Pl_layout import Ui_MainWindow
 
-def handle_video_download(playlist_url, start_index, stream_type):
-	playlist_section = get_playlist_section(playlist_url)
-	videos_to_download = []
-	if playlist_section != None:
-		playlist_video_urls = get_playlist_video_urls(playlist_section,youtube_domain)
-	else:
-		playlist_video_urls = [playlist_url]
-	videos_to_be_downloaded = get_videos_to_be_dowloaded(playlist_url, playlist_video_urls, start_index)
-	for url in videos_to_be_downloaded:
-		download_video(url,youtube_domain,stream_type)
+def handle_video_download(playlist_url, start_index, stream_type, download_type, app):
+    playlist_section = get_playlist_section(playlist_url, download_type)
+    youtube_domain = "https://www.youtube.com"
+    videos_to_download = []
+    if playlist_section != None:
+    	playlist_video_urls = get_playlist_video_urls(playlist_section,youtube_domain)
+    else:
+    	playlist_video_urls = [playlist_url]
+    videos_to_be_downloaded = get_videos_to_be_dowloaded(
+        playlist_url, playlist_video_urls, start_index)
+    for url in videos_to_be_downloaded:
+    	download_video(url,youtube_domain,stream_type, app)
 
 
-def get_playlist_section(playlist_url):
+def get_playlist_section(playlist_url, download_type):
+    if download_type == 'single':
+        return None
     response = urlopen(playlist_url)
     parsed_page = BeautifulSoup(response,'html.parser')
     playlist = parsed_page.find('div',class_='playlist-videos-container yt-scrollbar-dark yt-scrollbar')
@@ -30,6 +34,7 @@ def get_playlist_video_urls(playlist,youtube_domain):
     videos = playlist.find_all('li',class_='yt-uix-scroller-scroll-unit')
     video_urls = []
     for video in videos:
+        QtCore.QCoreApplication.processEvents()
         video_element = video.find('a',class_='playlist-video')
         video_url = youtube_domain + video_element['href']
         video_urls.append(unicode(video_url))
@@ -53,18 +58,22 @@ def get_videos_starting_current_url(current_video_url, video_urls):
 	return videos_from_current_url
 
 def get_index_of_current_video(current_video_url, video_urls):
-	number_of_videos = len(video_urls)
-	for video_index in range(0, number_of_videos):
-		if current_video_url in video_urls[video_index]:
-			return video_index
+    number_of_videos = len(video_urls)
+    for video_index in range(0, number_of_videos):
+        QtCore.QCoreApplication.processEvents()
+        if current_video_url in video_urls[video_index]:
+        	return video_index
 	return None
 
-def write_file(file_name,stream):
+def write_file(file_name,stream, file_size, app):
     with open(file_name, 'ab', 0) as f:
         while True:
+            QtCore.QCoreApplication.processEvents()
             one_kb = stream.read(1024)
             if not one_kb:
                 break
+            file_size += 1024
+            app.update_download_progress(file_size)
             f.write(one_kb)
 
 def get_download_link(file_info):
@@ -91,15 +100,16 @@ def get_video_size(download):
     download_size = int(download_info.getheaders("Content-Length")[0])
     return download_size
 
-def resume_download(file_size, file_name, download_size, download_url):
+def resume_download(file_size, file_name, download_size, download_url, app):
     print("Resuming download...")
     resume_url = "{0}&range={1}-{2}".format(download_url,file_size,download_size)
     download = urlopen(resume_url)
-    write_file(file_name,download)
+    write_file(file_name,download, file_size, app)
 
 def get_file_info(url,youtube_domain):
     video_id = url.split('?v=')[1]
     file_info_url = youtube_domain+'/get_video_info?video_id='+video_id
+    QtCore.QCoreApplication.processEvents()
     response_file = urlopen(file_info_url)
     file_info_coded = response_file.read()
     file_info = parse_qs(file_info_coded)
@@ -116,18 +126,23 @@ def get_video_name(title, stream_type):
     file_name = re.sub(r'[^(a-z)(A-Z)(0-9) .]','',content_name)
     return file_name
 
-def start_download(file_name, download_size, download_file, download_url):
+def start_download(file_name, download_size, download_file, download_url, app):
     if os.path.isfile(file_name):
         file_size = os.path.getsize(file_name)
         if file_size < download_size:
-            resume_download(file_size,file_name,download_size,download_url)
+            app.update_status('Resuming download..')
+            resume_download(file_size,file_name,download_size,download_url, app)
     else:
-        write_file(file_name,download_file)
+        write_file(file_name,download_file, 0, app)
+    app.show_success_message("Download complete!")
+    app.update_status('Completed!')
     print('Download complete!')
 
-def attempt_download(file_info,title,stream_type):
+def attempt_download(file_info,title,stream_type, app):
+    app.update_status('Downloading..')
     retry = 0
-    while retry < 5:
+    while retry < 20:
+        QtCore.QCoreApplication.processEvents()
         download_url = get_stream_url(file_info, stream_type)                       
         download_file = urlopen(download_url)
         download_size = get_video_size(download_file)
@@ -135,34 +150,49 @@ def attempt_download(file_info,title,stream_type):
             break
         retry += 1
     if download_size == 0:
+        app.update_status('Copyrighted!')
         raise Exception('Video is copyrighted or restricted')
     file_name = get_video_name(title, stream_type)
+    app.add_table_item(file_name, download_size, 0)
     print("Downloading:{0} \nSize: {1} bytes".format(file_name,download_size))            
-    start_download(file_name, download_size, download_file, download_url)    
+    start_download(file_name, download_size, download_file, download_url, app)    
 
-def download_video(url,youtube_domain,stream_type):
+def download_video(url,youtube_domain,stream_type, app):
     try:
         file_info,title = get_file_info(url,youtube_domain)
-        attempt_download(file_info,title,stream_type)
+        attempt_download(file_info,title,stream_type, app)
     except Exception as e:
+        error_message = e.args
+        app.show_error_message(error_message)
         print('Download failed! ',e.args)
-
-def parse_input_arguments(video_url, media_type, start_index):
-    youtube_domain = "https://www.youtube.com"
-    handle_video_download(video_url, start_index, media_type)
 
 class AppGui(QtGui.QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.ui = Ui_MainWindow()
-        self.ui.setupUi(self)    
+        self.ui.setupUi(self)   
+        self.ui.tableWidget.setColumnWidth(0, 200) 
+        self.ui.tableWidget.setColumnWidth(1, 90) 
         self.ui.pushButton.clicked.connect(self.pass_inputs_to_downloader)
 
     def pass_inputs_to_downloader(self):
-        video_url = self.ui.lineEdit.text()
+        self.update_status('Starting..')
+        self.ui.pushButton.setEnabled(False)
+        video_url = self.get_video_url()
         media_type = self.get_media_type()
+        download_type = self.get_download_type()
         start_index = self.get_start_index()
-        parse_input_arguments(video_url, media_type, start_index)
+        if video_url:
+            try:
+                handle_video_download(video_url, start_index, media_type, download_type, app=self)
+            except Exception as e:
+                self.show_error_message(e.args)
+                self.update_status('Failed!')
+        self.ui.pushButton.setEnabled(True)
+ 
+    def get_video_url(self):
+        video_url = self.ui.lineEdit.text()
+        return str(video_url)
 
     def get_media_type(self):
         media_type_video_button = self.ui.radioButton
@@ -171,7 +201,16 @@ class AppGui(QtGui.QMainWindow, Ui_MainWindow):
             media_type = 'video'
         else:
             media_type = 'audio'
-        return media_type
+        return str(media_type)
+
+    def get_download_type(self):
+        download_type_playlist_button = self.ui.radioButton_5
+        download_type_single_video_button = self.ui.radioButton_6
+        if download_type_playlist_button.isChecked():
+            download_type = 'playlist'
+        else:
+            download_type = 'single'
+        return str(download_type)
 
     def get_start_index(self):
         start_index_playlist_button = self.ui.radioButton_3
@@ -180,10 +219,38 @@ class AppGui(QtGui.QMainWindow, Ui_MainWindow):
             start_index = 'origin'
         else:
             start_index = 'current'
-        return start_index
+        return str(start_index)
+
+    def add_table_item(self, file_name, file_size, file_progress):
+        rowCount = self.ui.tableWidget.rowCount()
+        self.ui.tableWidget.insertRow(rowCount)
+        self.ui.tableWidget.setItem(rowCount, 0, QtGui.QTableWidgetItem(file_name))
+        self.ui.tableWidget.setItem(
+            rowCount, 1, QtGui.QTableWidgetItem(str(file_size)))
+        self.ui.tableWidget.setItem(
+            rowCount, 2, QtGui.QTableWidgetItem(str(file_progress)))
+
+    def update_download_progress(self, file_progress):
+        QtCore.QCoreApplication.processEvents()
+        rowCount = self.ui.tableWidget.rowCount() - 1
+        self.ui.tableWidget.setItem(
+            rowCount, 2, QtGui.QTableWidgetItem(str(file_progress)))
+
+    def update_status(self, status):
+        self.ui.label_2.setText(str(status))
+
+    def show_success_message(self, Message):
+        QtGui.QMessageBox.information(self, "Pl-Dl success", str(Message))
+    
+    def show_error_message(self, Message):
+        QtGui.QMessageBox.critical(self, "Pl-Dl error", "Download Failed: {0}".format(str(Message)))
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
     window = AppGui()
     window.show()
-    app.exec_()
+    window.activateWindow()
+    window.raise_()
+    sys.exit(app.exec_())
+    app.quit()
+
