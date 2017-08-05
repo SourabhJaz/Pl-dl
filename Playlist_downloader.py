@@ -174,6 +174,7 @@ class AppGui(QtGui.QMainWindow, Ui_MainWindow):
         self.ui.tableWidget.setColumnWidth(0, 200) 
         self.ui.tableWidget.setColumnWidth(1, 90) 
         self.ui.pushButton.clicked.connect(self.pass_inputs_to_downloader)
+        QtCore.QCoreApplication.processEvents()
 
     def pass_inputs_to_downloader(self):
         self.update_status('Starting..')
