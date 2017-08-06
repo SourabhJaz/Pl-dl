@@ -62,8 +62,8 @@ def get_index_of_current_video(current_video_url, video_urls):
     for video_index in range(0, number_of_videos):
         QtCore.QCoreApplication.processEvents()
         if current_video_url in video_urls[video_index]:
-        	return video_index
-	return None
+            return video_index
+    return None
 
 def write_file(file_name,stream, file_size, app):
     with open(file_name, 'ab', 0) as f:
@@ -107,7 +107,14 @@ def resume_download(file_size, file_name, download_size, download_url, app):
     write_file(file_name,download, file_size, app)
 
 def get_file_info(url,youtube_domain):
-    video_id = url.split('?v=')[1]
+    normal_video_id_split = url.split('?v=')
+    shortened_video_id_split = url.split('.be/')
+    if len(normal_video_id_split) > 1:
+        video_id = normal_video_id_split[1]
+    elif len(shortened_video_id_split) > 1:
+        video_id = shortened_video_id_split[1]
+    else:
+        raise Exception('Video URL not comprehensible')
     file_info_url = youtube_domain+'/get_video_info?video_id='+video_id
     QtCore.QCoreApplication.processEvents()
     response_file = urlopen(file_info_url)
