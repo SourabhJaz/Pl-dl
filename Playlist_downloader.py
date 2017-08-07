@@ -4,7 +4,6 @@ from urlparse import parse_qs
 import sys
 import os
 import re
-sys.path.append('/usr/local/lib/python2.7/site-packages')
 from PyQt4 import QtCore, QtGui 
 from Pl_layout import Ui_MainWindow
 
